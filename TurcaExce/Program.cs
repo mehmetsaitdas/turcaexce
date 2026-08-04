@@ -30,8 +30,9 @@ namespace TurcaExce
                 // CLI modunda soru sorulamaz; bilinmeyen kodlar uyarı olarak loglanır.
                 var colorRegistry = ColorRegistry.Load(settings.ColorMap);
                 var sizeRegistry = SizeRegistry.Load();
+                var serialRegistry = SerialRegistry.Load();
                 var sourceLines = ProductionOrderReader.Read(sourcePath);
-                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry).Convert(sourceLines);
+                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry, serialRegistry).Convert(sourceLines);
                 ExcelWriter.Write(targetPath, result.Rows);
                 eanRegistry.Save();
 

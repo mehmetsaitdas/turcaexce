@@ -23,6 +23,7 @@ namespace TurcaExce.Services
         EanRegistry eanRegistry,
         ColorRegistry colorRegistry,
         SizeRegistry sizeRegistry,
+        SerialRegistry serialRegistry,
         Func<string, string?>? askUnknownColor = null,
         Func<string, string?>? askUnknownSize = null)
     {
@@ -78,6 +79,9 @@ namespace TurcaExce.Services
                 var pieceCount = source.Quantity * Math.Max(1, settings.QuantityMultiplier);
 
                 // Ser: her adet (çıktı satırı) için ayrı, sürekli artan numara.
+                // TakeNext, candidate daha önce (bu makineden) hiç kullanılmamışsa
+                // olduğu gibi kullanır; kayıtta zaten varsa (sayaç bir şekilde geri
+                // düşmüşse) otomatik olarak bir sonraki boş numaraya atlar.
                 for (int i = 0; i < pieceCount; i++)
                 {
                     result.Rows.Add(new ProductEntryRow
@@ -89,7 +93,7 @@ namespace TurcaExce.Services
                         Color = color,
                         Size = size,
                         Edge = edge,
-                        Serial = $"{serialPrefix}{serial++}",
+                        Serial = $"{serialPrefix}{serialRegistry.TakeNext(ref serial)}",
                         Ean = ean,
                     });
                 }
@@ -99,6 +103,7 @@ namespace TurcaExce.Services
             // son kullanılan seri numarası kalıcı ayarlara geri yazılır.
             settings.StartingSerial = serial;
             settings.Save();
+            serialRegistry.Save();
 
             return result;
         }
@@ -268,7 +273,7 @@ namespace TurcaExce.Services
                             Color = colorDisplay,
                             Size = size,
                             Edge = edge,
-                            Serial = $"{serialPrefix}{serial++}",
+                            Serial = $"{serialPrefix}{serialRegistry.TakeNext(ref serial)}",
                             Ean = ean,
                             ImagePath = row.ImagePath,
                         });
@@ -280,6 +285,7 @@ namespace TurcaExce.Services
             // son kullanılan seri numarası kalıcı ayarlara geri yazılır.
             settings.StartingSerial = serial;
             settings.Save();
+            serialRegistry.Save();
 
             return result;
         }

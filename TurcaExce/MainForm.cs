@@ -194,8 +194,9 @@ namespace TurcaExce
                 var eanRegistry = EanRegistry.Load(settings.StartingEan);
                 var colorRegistry = ColorRegistry.Load(settings.ColorMap);
                 var sizeRegistry = SizeRegistry.Load();
+                var serialRegistry = SerialRegistry.Load();
                 var sourceLines = ProductionOrderReader.Read(txtSourcePath.Text);
-                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry,
+                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry, serialRegistry,
                         PromptColorName, PromptSizeName)
                     .Convert(sourceLines);
 
@@ -247,7 +248,8 @@ namespace TurcaExce
                 lblStatus.Text = "Dönüştürülüyor...";
 
                 var eanRegistry = EanRegistry.Load(settings.StartingEan);
-                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry)
+                var serialRegistry = SerialRegistry.Load();
+                var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry, serialRegistry)
                     .ConvertManual(orderDialog.Quality, orderDialog.Rows);
 
                 var summary = new ManualOrderSummary

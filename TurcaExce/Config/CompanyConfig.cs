@@ -1,4 +1,4 @@
-﻿using TurcaExce.Services;
+using TurcaExce.Services;
 
 namespace TurcaExce.Config
 {
@@ -7,6 +7,8 @@ namespace TurcaExce.Config
     /// Birden fazla firma bu programı kullanırsa, çıktı seri numaralarının
     /// (Ser) firmalar arasında çakışmaması için firma adının ilk üç
     /// sessiz harfi seri numarasının başına eklenir (bkz. SerialPrefix).
+    /// Ayni firma icinde ayni numaranin tekrar atanmamasi SerialRegistry
+    /// (bkz. Services\SerialRegistry.cs) ile saglanir.
     /// </summary>
     public class CompanyConfig
     {

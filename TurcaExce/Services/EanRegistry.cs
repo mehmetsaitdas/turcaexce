@@ -20,6 +20,8 @@ namespace TurcaExce.Services
 
         public static EanRegistry Load(long startingEan)
         {
+            MigrateToV2IfNeeded();
+
             var registry = new EanRegistry { _nextBase = startingEan };
 
             if (File.Exists(FilePath))
@@ -78,5 +80,30 @@ namespace TurcaExce.Services
             File.WriteAllLines(FilePath,
                 _eanByPattern.OrderBy(kv => kv.Value, StringComparer.Ordinal)
                              .Select(kv => $"{kv.Key}\t{kv.Value}"));
+
+        /// <summary>
+        /// 13 haneli, dogru kontrol haneli EAN uretimine gecildi (eskiden kontrol
+        /// hanesi ve 12. hane olmadan, dogrudan 11 haneli sayac degeri EAN olarak
+        /// kaydediliyordu). O eski kayitlar musterilere zaten gitmis, gecerli
+        /// entegrasyonlar olabilir; bu yuzden sessizce/otomatik migrate edilmez,
+        /// sadece eski kayit defteri bir kerelik kenara alinir ve sayac
+        /// StartingEan'dan sifirdan baslar. Her istemcide (makinede) BIR KEZ
+        /// calisir - bayrak dosyasi sayesinde bir daha asla tekrarlanmaz, aksi
+        /// halde her acilista onceden verilmis EAN'lar yeniden uretilirdi.
+        /// </summary>
+        private static void MigrateToV2IfNeeded()
+        {
+            var flagPath = Path.Combine(AppPaths.DataDirectory, "ean_registry_v2.flag");
+            if (File.Exists(flagPath)) return;
+
+            if (File.Exists(FilePath))
+            {
+                var backupPath = Path.Combine(AppPaths.DataDirectory,
+                    $"ean_registry_eski_{DateTime.Now:yyyyMMdd_HHmmss}.bak");
+                File.Move(FilePath, backupPath);
+            }
+
+            File.WriteAllText(flagPath, $"EAN-13 formatina (13 hane, kontrol haneli) gecis: {DateTime.Now:O}");
+        }
     }
 }

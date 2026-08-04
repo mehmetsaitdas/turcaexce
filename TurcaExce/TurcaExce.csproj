@@ -17,7 +17,7 @@
 
   <PropertyGroup>
     <NeutralLanguage>tr</NeutralLanguage>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,5 +31,32 @@
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.2" />
   </ItemGroup>
+
+  <!--
+    Publish (ClickOnce dahil), RuntimeIdentifier verilmeden yapildigi icin native
+    paketlerin (SkiaSharp) runtimes\<rid>\ altindaki TUM platformlarini (linux-*, osx, win-*)
+    ayrim yapmadan topluyordu; ayrica Windows RID'lerinin her birinde ~80 MB'lik native
+    .pdb (debug sembolu) dosyasi da kullaniciya hic gerek olmadigi halde kopyalaniyordu.
+    ClickOnce bu dosyalari @(ResolvedFileToPublish) uzerinden degil, ResolvePackageAssets
+    ciktisi olan @(NativeCopyLocalItems)/@(RuntimeTargetsCopyLocalItems) uzerinden dogrudan
+    okudugu icin filtreleme bu iki item'in olustugu noktada (ResolvePackageAssets'ten hemen
+    sonra) yapilmali; daha gec bir hook (orn. ComputeFilesToPublish) ClickOnce'i etkilemiyor.
+    Bu uygulama net9.0-windows/WinForms oldugundan Windows disi hicbir RID'e gerek yok.
+  -->
+  <Target Name="TrimNonWindowsAndNativeSymbolAssets" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <!-- (a) Windows disindaki RID'lerin tum native varliklarini at (linux-*, osx, ...) -->
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
+          Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(NativeCopyLocalItems.Identity)', '[\\/]runtimes[\\/](?!win)[^\\/]+[\\/]'))" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+          Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(RuntimeTargetsCopyLocalItems.Identity)', '[\\/]runtimes[\\/](?!win)[^\\/]+[\\/]'))" />
+
+      <!-- (b) Kalan Windows RID'lerinde native .pdb debug sembollerini at -->
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
+          Condition="'%(NativeCopyLocalItems.Extension)' == '.pdb' and $([System.Text.RegularExpressions.Regex]::IsMatch('%(NativeCopyLocalItems.Identity)', '[\\/]runtimes[\\/][^\\/]+[\\/]native[\\/]'))" />
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+          Condition="'%(RuntimeTargetsCopyLocalItems.Extension)' == '.pdb' and $([System.Text.RegularExpressions.Regex]::IsMatch('%(RuntimeTargetsCopyLocalItems.Identity)', '[\\/]runtimes[\\/][^\\/]+[\\/]native[\\/]'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>
