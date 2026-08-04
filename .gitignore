@@ -1,0 +1,21 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / IDE
+.vs/
+*.user
+*.suo
+
+# Publish output (ClickOnce staging + generated manifests/bootstrapper)
+bin\Publish/
+**/bin/Publish/
+**/*.publish/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# OS junk
+Thumbs.db
+desktop.ini
