@@ -49,12 +49,12 @@
             lblWarnings = new Label();
             txtWarnings = new TextBox();
             lblSettingsFile = new Label();
+            btnEmaHistory = new Button();
             ((System.ComponentModel.ISupportInitialize)gridPreview).BeginInit();
             SuspendLayout();
-            //
+            // 
             // btnCompany
-            //
-            btnCompany.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            // 
             btnCompany.Location = new Point(12, 11);
             btnCompany.Name = "btnCompany";
             btnCompany.Size = new Size(300, 25);
@@ -63,9 +63,9 @@
             btnCompany.TextAlign = ContentAlignment.MiddleLeft;
             btnCompany.UseVisualStyleBackColor = true;
             btnCompany.Click += btnCompany_Click;
-            //
+            // 
             // btnSupport
-            //
+            // 
             btnSupport.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnSupport.Location = new Point(858, 11);
             btnSupport.Name = "btnSupport";
@@ -74,26 +74,46 @@
             btnSupport.Text = "Destek";
             btnSupport.UseVisualStyleBackColor = true;
             btnSupport.Click += btnSupport_Click;
-            //
+            // 
+            // btnManualOrder
+            // 
+            btnManualOrder.Location = new Point(320, 114);
+            btnManualOrder.Name = "btnManualOrder";
+            btnManualOrder.Size = new Size(205, 32);
+            btnManualOrder.TabIndex = 19;
+            btnManualOrder.Text = "Elle Üretim Emri Gir";
+            btnManualOrder.UseVisualStyleBackColor = true;
+            btnManualOrder.Click += btnManualOrder_Click;
+            // 
+            // btnPrint
+            // 
+            btnPrint.Location = new Point(535, 114);
+            btnPrint.Name = "btnPrint";
+            btnPrint.Size = new Size(134, 32);
+            btnPrint.TabIndex = 20;
+            btnPrint.Text = "Yazdır";
+            btnPrint.UseVisualStyleBackColor = true;
+            btnPrint.Click += btnPrint_Click;
+            // 
             // lblSource
-            //
+            // 
             lblSource.AutoSize = true;
             lblSource.Location = new Point(12, 52);
             lblSource.Name = "lblSource";
-            lblSource.Size = new Size(100, 15);
+            lblSource.Size = new Size(101, 15);
             lblSource.TabIndex = 0;
             lblSource.Text = "Üretim emri (.xls):";
-            //
+            // 
             // txtSourcePath
-            //
+            // 
             txtSourcePath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtSourcePath.Location = new Point(130, 48);
             txtSourcePath.Name = "txtSourcePath";
             txtSourcePath.Size = new Size(716, 23);
             txtSourcePath.TabIndex = 1;
-            //
+            // 
             // btnBrowseSource
-            //
+            // 
             btnBrowseSource.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnBrowseSource.Location = new Point(858, 47);
             btnBrowseSource.Name = "btnBrowseSource";
@@ -102,26 +122,26 @@
             btnBrowseSource.Text = "Gözat...";
             btnBrowseSource.UseVisualStyleBackColor = true;
             btnBrowseSource.Click += btnBrowseSource_Click;
-            //
+            // 
             // lblTarget
-            //
+            // 
             lblTarget.AutoSize = true;
             lblTarget.Location = new Point(12, 84);
             lblTarget.Name = "lblTarget";
-            lblTarget.Size = new Size(66, 15);
+            lblTarget.Size = new Size(68, 15);
             lblTarget.TabIndex = 3;
             lblTarget.Text = "Çıktı (.xlsx):";
-            //
+            // 
             // txtTargetPath
-            //
+            // 
             txtTargetPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtTargetPath.Location = new Point(130, 80);
             txtTargetPath.Name = "txtTargetPath";
             txtTargetPath.Size = new Size(716, 23);
             txtTargetPath.TabIndex = 4;
-            //
+            // 
             // btnBrowseTarget
-            //
+            // 
             btnBrowseTarget.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnBrowseTarget.Location = new Point(858, 79);
             btnBrowseTarget.Name = "btnBrowseTarget";
@@ -130,9 +150,9 @@
             btnBrowseTarget.Text = "Gözat...";
             btnBrowseTarget.UseVisualStyleBackColor = true;
             btnBrowseTarget.Click += btnBrowseTarget_Click;
-            //
+            // 
             // btnConvert
-            //
+            // 
             btnConvert.Location = new Point(130, 114);
             btnConvert.Name = "btnConvert";
             btnConvert.Size = new Size(180, 32);
@@ -140,85 +160,65 @@
             btnConvert.Text = "Dönüştür";
             btnConvert.UseVisualStyleBackColor = true;
             btnConvert.Click += btnConvert_Click;
-            //
-            // btnManualOrder
-            //
-            btnManualOrder.Location = new Point(320, 114);
-            btnManualOrder.Name = "btnManualOrder";
-            btnManualOrder.Size = new Size(205, 32);
-            btnManualOrder.TabIndex = 19;
-            btnManualOrder.Text = "Elle Üretim Emri Gir";
-            btnManualOrder.UseVisualStyleBackColor = true;
-            btnManualOrder.Click += btnManualOrder_Click;
-            //
-            // btnPrint
-            //
-            btnPrint.Location = new Point(535, 114);
-            btnPrint.Name = "btnPrint";
-            btnPrint.Size = new Size(100, 32);
-            btnPrint.TabIndex = 20;
-            btnPrint.Text = "Yazdır";
-            btnPrint.UseVisualStyleBackColor = true;
-            btnPrint.Click += btnPrint_Click;
-            //
+            // 
             // lblStatus
-            //
+            // 
             lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblStatus.Location = new Point(645, 114);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(327, 32);
             lblStatus.TabIndex = 7;
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
-            //
+            // 
             // lblEmail
-            //
+            // 
             lblEmail.AutoSize = true;
             lblEmail.Location = new Point(12, 158);
             lblEmail.Name = "lblEmail";
-            lblEmail.Size = new Size(52, 15);
+            lblEmail.Size = new Size(50, 15);
             lblEmail.TabIndex = 12;
             lblEmail.Text = "E-posta:";
-            //
+            // 
             // txtEmail
-            //
+            // 
             txtEmail.Location = new Point(130, 154);
             txtEmail.Name = "txtEmail";
             txtEmail.PlaceholderText = "alici@ornek.com";
-            txtEmail.Size = new Size(300, 23);
+            txtEmail.Size = new Size(241, 23);
             txtEmail.TabIndex = 13;
-            //
+            // 
             // btnSendEmail
-            //
-            btnSendEmail.Location = new Point(440, 153);
+            // 
+            btnSendEmail.Location = new Point(391, 153);
             btnSendEmail.Name = "btnSendEmail";
-            btnSendEmail.Size = new Size(150, 25);
+            btnSendEmail.Size = new Size(134, 25);
             btnSendEmail.TabIndex = 14;
             btnSendEmail.Text = "E-posta Gönder";
             btnSendEmail.UseVisualStyleBackColor = true;
             btnSendEmail.Click += btnSendEmail_Click;
-            //
+            // 
             // btnOutlookLogin
-            //
-            btnOutlookLogin.Location = new Point(600, 153);
+            // 
+            btnOutlookLogin.Location = new Point(685, 153);
             btnOutlookLogin.Name = "btnOutlookLogin";
-            btnOutlookLogin.Size = new Size(170, 25);
+            btnOutlookLogin.Size = new Size(140, 25);
             btnOutlookLogin.TabIndex = 15;
             btnOutlookLogin.Text = "Outlook ile Giriş Yap";
             btnOutlookLogin.UseVisualStyleBackColor = true;
             btnOutlookLogin.Click += btnOutlookLogin_Click;
-            //
+            // 
             // lblMailStatus
-            //
+            // 
             lblMailStatus.AutoSize = true;
             lblMailStatus.ForeColor = SystemColors.GrayText;
-            lblMailStatus.Location = new Point(780, 158);
+            lblMailStatus.Location = new Point(831, 157);
             lblMailStatus.Name = "lblMailStatus";
-            lblMailStatus.Size = new Size(160, 15);
+            lblMailStatus.Size = new Size(141, 15);
             lblMailStatus.TabIndex = 16;
             lblMailStatus.Text = "(Outlook girişi yapılmadı)";
-            //
+            // 
             // gridPreview
-            //
+            // 
             gridPreview.AllowUserToAddRows = false;
             gridPreview.AllowUserToDeleteRows = false;
             gridPreview.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -230,9 +230,9 @@
             gridPreview.RowHeadersVisible = false;
             gridPreview.Size = new Size(960, 330);
             gridPreview.TabIndex = 8;
-            //
+            // 
             // lblWarnings
-            //
+            // 
             lblWarnings.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             lblWarnings.AutoSize = true;
             lblWarnings.Location = new Point(12, 528);
@@ -240,9 +240,9 @@
             lblWarnings.Size = new Size(50, 15);
             lblWarnings.TabIndex = 9;
             lblWarnings.Text = "Uyarılar:";
-            //
+            // 
             // txtWarnings
-            //
+            // 
             txtWarnings.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             txtWarnings.Location = new Point(12, 546);
             txtWarnings.Multiline = true;
@@ -251,9 +251,9 @@
             txtWarnings.ScrollBars = ScrollBars.Vertical;
             txtWarnings.Size = new Size(960, 90);
             txtWarnings.TabIndex = 10;
-            //
+            // 
             // lblSettingsFile
-            //
+            // 
             lblSettingsFile.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             lblSettingsFile.AutoEllipsis = true;
             lblSettingsFile.ForeColor = SystemColors.GrayText;
@@ -261,12 +261,23 @@
             lblSettingsFile.Name = "lblSettingsFile";
             lblSettingsFile.Size = new Size(960, 15);
             lblSettingsFile.TabIndex = 11;
-            //
+            // 
+            // btnEmaHistory
+            // 
+            btnEmaHistory.Location = new Point(535, 153);
+            btnEmaHistory.Name = "btnEmaHistory";
+            btnEmaHistory.Size = new Size(134, 25);
+            btnEmaHistory.TabIndex = 21;
+            btnEmaHistory.Text = "Gönderim Geçmişi";
+            btnEmaHistory.UseVisualStyleBackColor = true;
+            btnEmaHistory.Click += btnEmaHistory_Click;
+            // 
             // MainForm
-            //
+            // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(984, 667);
+            Controls.Add(btnEmaHistory);
             Controls.Add(btnCompany);
             Controls.Add(btnSupport);
             Controls.Add(lblSource);
@@ -322,5 +333,6 @@
         private Label lblWarnings;
         private TextBox txtWarnings;
         private Label lblSettingsFile;
+        private Button btnEmaHistory;
     }
 }

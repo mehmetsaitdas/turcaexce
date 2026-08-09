@@ -515,7 +515,12 @@ namespace TurcaExce
                     subject: $"Ürün Girişi - {fileName}",
                     body: $"Ektedir: {fileName}\n\nBu e-posta TurcaExce tarafından gönderilmiştir.");
 
-                lblStatus.Text = $"E-posta gönderildi: {recipient}";
+                // Gönderim başarılıysa geçmişe yaz ("Gönderim Geçmişi" butonu bunu
+                // listeler). Yazma başarısız olsa bile e-posta gitmiş sayılır,
+                // kullanıcı yalnızca durum satırında uyarılır.
+                lblStatus.Text = EmailHistory.Append(fileName, recipient)
+                    ? $"E-posta gönderildi: {recipient}"
+                    : $"E-posta gönderildi: {recipient} (geçmiş kaydı yazılamadı)";
             }
             catch (Exception ex)
             {
@@ -527,6 +532,13 @@ namespace TurcaExce
             {
                 Cursor = Cursors.Default;
             }
+        }
+
+        /// <summary>Hangi dosyanın hangi tarihte gönderildiğini listeler (en yeni en başta).</summary>
+        private void btnEmaHistory_Click(object? sender, EventArgs e)
+        {
+            using var dialog = new EmaHisForm();
+            dialog.ShowDialog(this);
         }
     }
 }
