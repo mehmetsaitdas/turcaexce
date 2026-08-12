@@ -13,7 +13,7 @@ namespace TurcaExce
     /// </summary>
     public class MaOrForm : Form
     {
-        private static readonly string[] DefaultSizes = ["300X400", "250X350", "200X300", "150X230", "100X150"];
+        private static readonly string[] DefaultSizes = ["100X150", "150X230", "200X300", "250X350", "300X400"];
 
         /// <summary>Kalite açılır listesindeki bir öğe; ekranda "Kod - Ad" gösterilir, Quality için Ad kullanılır.</summary>
         private sealed record QualityItem(string Kod, string Ad)
@@ -24,6 +24,7 @@ namespace TurcaExce
         private readonly ConversionSettings _settings;
         private readonly ColorRegistry _colorRegistry;
         private readonly SizeRegistry _sizeRegistry;
+        private readonly SizeLayout _sizeLayout;
         private readonly ProgramNoRegistry _programNoRegistry;
         private readonly ComboBox _cmbQuality;
         private readonly TextBox _txtProgramNo;
@@ -44,6 +45,7 @@ namespace TurcaExce
             _settings = settings;
             _colorRegistry = colorRegistry;
             _sizeRegistry = sizeRegistry;
+            _sizeLayout = SizeLayout.Load();
             _programNoRegistry = programNoRegistry;
 
             // Hiç kayıtlı ebat yoksa (ilk kullanım), görseldeki gibi yaygın
@@ -57,8 +59,11 @@ namespace TurcaExce
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.Sizable;
             MinimizeBox = false;
-            ClientSize = new Size(900, 560);
-            MinimumSize = new Size(700, 420);
+            ClientSize = new Size(1280, 720);
+            MinimumSize = new Size(1180, 560);
+            // Ebat sütunları yan yana çok yer kapladığı için pencere doğrudan
+            // tam ekran açılır; kullanıcı isterse küçültebilir.
+            WindowState = FormWindowState.Maximized;
             ShowInTaskbar = false;
 
             var lblQuality = new Label { Text = "Kalite:", Location = new Point(12, 15), AutoSize = true };
@@ -78,8 +83,19 @@ namespace TurcaExce
                     RefreshQualityItems();
             };
 
-            var lblProgramNo = new Label { Text = "Program No:", Location = new Point(680, 15), AutoSize = true };
-            _txtProgramNo = new TextBox { Location = new Point(768, 11), Size = new Size(120, 23) };
+            var lblProgramNo = new Label
+            {
+                Text = "Program No:",
+                Location = new Point(1060, 15),
+                AutoSize = true,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            };
+            _txtProgramNo = new TextBox
+            {
+                Location = new Point(1148, 11),
+                Size = new Size(120, 23),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            };
 
             _rowContextMenu = new ContextMenuStrip();
             var menuAddImage = new ToolStripMenuItem("Resim Ekle...");
@@ -91,7 +107,7 @@ namespace TurcaExce
             _grid = new DataGridView
             {
                 Location = new Point(12, 44),
-                Size = new Size(876, 400),
+                Size = new Size(1256, 560),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 AllowUserToAddRows = false,
                 RowHeadersVisible = false,
@@ -143,22 +159,33 @@ namespace TurcaExce
                     AddImageToRow(args.RowIndex);
             };
 
-            foreach (var size in _sizeRegistry.Map.Values.Distinct())
+            // Kayıtlı ebatların tamamı yan yana sığmadığı için ekran, en son
+            // kaydedilen şablonla (size_layout.txt) açılır; hiç şablon yoksa
+            // yalnızca yaygın beş ebatla. Kalanları kullanıcı "Kayıtlı Ebat
+            // Ekle" ile getirir, istemediğini "Sütun Ebat Sil" ile kaldırır.
+            List<string> initialSizes = _sizeLayout.Sizes.Count > 0 ? _sizeLayout.Sizes : [.. DefaultSizes];
+            foreach (var size in initialSizes)
                 AddSizeColumn(size);
 
-            var btnAddRow = new Button { Text = "+ Satır Ekle", Location = new Point(372, 10), Size = new Size(100, 25) };
+            var btnAddRow = new Button { Text = "+ Satır Ekle", Location = new Point(372, 10), Size = new Size(95, 25) };
             btnAddRow.Click += (_, _) => AddGridRow();
 
-            var btnRemoveRow = new Button { Text = "Satır Sil", Location = new Point(478, 10), Size = new Size(90, 25) };
+            var btnRemoveRow = new Button { Text = "Satır Sil", Location = new Point(471, 10), Size = new Size(80, 25) };
             btnRemoveRow.Click += (_, _) => RemoveSelectedRows();
 
-            var btnAddSize = new Button { Text = "+ Ebat Ekle", Location = new Point(574, 10), Size = new Size(100, 25) };
+            var btnAddSize = new Button { Text = "Ebat Ekle", Location = new Point(555, 10), Size = new Size(85, 25) };
             btnAddSize.Click += (_, _) => AddSizeColumnInteractive();
+
+            var btnAddSavedSize = new Button { Text = "Kayıtlı Ebat Ekle", Location = new Point(644, 10), Size = new Size(125, 25) };
+            btnAddSavedSize.Click += (_, _) => AddSavedSizeColumns();
+
+            var btnRemoveSize = new Button { Text = "Sütun Ebat Sil", Location = new Point(773, 10), Size = new Size(110, 25) };
+            btnRemoveSize.Click += (_, _) => RemoveSizeColumns();
 
             _lblTotals = new Label
             {
                 Text = "Toplam Adet: 0    Toplam m²: 0",
-                Location = new Point(12, 452),
+                Location = new Point(12, 612),
                 Size = new Size(560, 23),
                 ForeColor = SystemColors.GrayText,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
@@ -167,7 +194,7 @@ namespace TurcaExce
             var btnCancel = new Button
             {
                 Text = "İptal",
-                Location = new Point(590, 522),
+                Location = new Point(971, 678),
                 Size = new Size(75, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             };
@@ -176,14 +203,14 @@ namespace TurcaExce
             var btnOk = new Button
             {
                 Text = "Üretim Emrine Dönüştür",
-                Location = new Point(672, 522),
+                Location = new Point(1052, 678),
                 Size = new Size(216, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             };
             btnOk.Click += BtnOk_Click;
 
             Controls.AddRange([lblQuality, _cmbQuality, btnQualityManage, lblProgramNo, _txtProgramNo,
-                btnAddRow, btnRemoveRow, btnAddSize, _grid, _lblTotals, btnCancel, btnOk]);
+                btnAddRow, btnRemoveRow, btnAddSize, btnAddSavedSize, btnRemoveSize, _grid, _lblTotals, btnCancel, btnOk]);
             CancelButton = btnCancel;
 
             for (int i = 0; i < 3; i++) AddGridRow();
@@ -330,6 +357,73 @@ namespace TurcaExce
 
             _sizeRegistry.Add(normalized, normalized);
             AddSizeColumn(normalized);
+            SaveSizeLayout();
+        }
+
+        /// <summary>
+        /// Daha önce kaydedilmiş ebatlardan (sizes.txt) ekranda olmayanları
+        /// listeler; seçilenler sütun olarak eklenir.
+        /// </summary>
+        private void AddSavedSizeColumns()
+        {
+            var available = _sizeRegistry.Map.Values
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(size => !_sizeColumns.Contains(size, StringComparer.OrdinalIgnoreCase))
+                .OrderBy(SizeSortKey)
+                .ThenBy(size => size, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (available.Count == 0)
+            {
+                MessageBox.Show(this, "Kayıtlı ebatların tamamı zaten ekli.", "Bilgi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var selected = PromptSelect("Kayıtlı Ebat Ekle", "Eklemek istediğiniz ebatları seçin:", available);
+            if (selected.Count == 0) return;
+
+            foreach (var size in selected)
+                AddSizeColumn(size);
+            SaveSizeLayout();
+        }
+
+        /// <summary>
+        /// Yalnızca ekrandaki ebat sütununu kaldırır; kayıtlı ebat listesi
+        /// (sizes.txt) olduğu gibi kalır, "Kayıtlı Ebat Ekle" ile geri getirilebilir.
+        /// </summary>
+        private void RemoveSizeColumns()
+        {
+            if (_sizeColumns.Count == 0)
+            {
+                MessageBox.Show(this, "Ekranda kaldırılacak ebat sütunu yok.", "Bilgi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var selected = PromptSelect("Sütun Ebat Sil", "Kaldırılacak ebat sütunlarını seçin:", _sizeColumns);
+            if (selected.Count == 0) return;
+
+            foreach (var size in selected)
+            {
+                _grid.Columns.Remove("size_" + size);
+                _sizeColumns.RemoveAll(s => string.Equals(s, size, StringComparison.OrdinalIgnoreCase));
+            }
+
+            SaveSizeLayout();
+            UpdateTotals();
+        }
+
+        /// <summary>Ekrandaki ebat sütunlarını şablon olarak kaydeder; pencere bir dahaki açılışta aynı listeyle gelir.</summary>
+        private void SaveSizeLayout() => _sizeLayout.Save(_sizeColumns);
+
+        /// <summary>"100X150" -> (100, 150); sıralamada "80X150" metin olarak "100X150"nin önüne geçmesin diye.</summary>
+        private static (double W, double H) SizeSortKey(string size)
+        {
+            var parts = size.Split('X', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2 || !double.TryParse(parts[0], out var w) || !double.TryParse(parts[1], out var h))
+                return (double.MaxValue, double.MaxValue);
+            return (w, h);
         }
 
         private void AddSizeColumn(string size)
@@ -479,6 +573,50 @@ namespace TurcaExce
             dialog.CancelButton = btnCancel;
 
             return dialog.ShowDialog(this) == DialogResult.OK ? txt.Text.Trim() : null;
+        }
+
+        /// <summary>Çoklu seçimli basit liste penceresi; işaretlenenleri döndürür (iptalde boş liste).</summary>
+        private List<string> PromptSelect(string title, string message, IEnumerable<string> items)
+        {
+            using var dialog = new Form
+            {
+                Text = title,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                ClientSize = new Size(320, 360),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowInTaskbar = false,
+            };
+            var lbl = new Label { Text = message, Location = new Point(12, 12), Size = new Size(296, 20) };
+            var list = new CheckedListBox
+            {
+                Location = new Point(12, 38),
+                Size = new Size(296, 262),
+                CheckOnClick = true,
+            };
+            list.Items.AddRange([.. items]);
+            var btnOk = new Button
+            {
+                Text = "Tamam",
+                DialogResult = DialogResult.OK,
+                Location = new Point(152, 318),
+                Size = new Size(75, 28),
+            };
+            var btnCancel = new Button
+            {
+                Text = "İptal",
+                DialogResult = DialogResult.Cancel,
+                Location = new Point(233, 318),
+                Size = new Size(75, 28),
+            };
+            dialog.Controls.AddRange([lbl, list, btnOk, btnCancel]);
+            dialog.AcceptButton = btnOk;
+            dialog.CancelButton = btnCancel;
+
+            return dialog.ShowDialog(this) == DialogResult.OK
+                ? [.. list.CheckedItems.Cast<string>()]
+                : [];
         }
     }
 }
