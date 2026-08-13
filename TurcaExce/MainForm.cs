@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using TurcaExce.Config;
 using TurcaExce.Models;
 using TurcaExce.Services;
@@ -12,8 +13,16 @@ namespace TurcaExce
             InitializeComponent();
             // Pencere ikonu = exe'ye gömülü uygulama ikonu (Resources\app.ico).
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
+            // Sürüm başlık çubuğunda görünür (kullanıcı destek isterken hangi
+            // sürümü kullandığını söyleyebilsin). Kaynağı csproj'daki
+            // AssemblyVersion; Application.ProductVersion kullanılmıyor çünkü o
+            // AssemblyVersion'ı değil InformationalVersion'ı okur ve ayarlı
+            // olmadığı için son haneyi ("1.0.0.3" -> "1.0.0") kaybediyordu.
+            Text = $"{Text}   —   Sürüm {AppVersion}";
+
             lblSettingsFile.Text =
-                $"Eşleşme tabloları: {ConversionSettings.FilePath}   |   Renkler: {ColorRegistry.FilePath}   |   EAN kayıtları: {EanRegistry.FilePath}";
+                $"Sürüm: {AppVersion}   |   Eşleşme tabloları: {ConversionSettings.FilePath}   |   Renkler: {ColorRegistry.FilePath}   |   EAN kayıtları: {EanRegistry.FilePath}";
 
             var settings = ConversionSettings.Load();
 
@@ -27,6 +36,10 @@ namespace TurcaExce
 
             InitializeCompanyName();
         }
+
+        /// <summary>csproj'daki AssemblyVersion, görüntülenmeye hazır hali (örn. "1.0.0.3").</summary>
+        private static string AppVersion =>
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "bilinmiyor";
 
         /// <summary>
         /// config.ini'de firma adı yoksa (ilk açılış) girilmesini zorunlu
@@ -231,11 +244,14 @@ namespace TurcaExce
             using var orderDialog = new MaOrForm(settings, colorRegistry, sizeRegistry, programNoRegistry);
             if (orderDialog.ShowDialog(this) != DialogResult.OK) return;
 
-            // Dosya diyaloğu sormadan, programın bulunduğu klasör altında bugünün
-            // tarihiyle bir klasör açar (örn. 20260729) ve içine Program No adıyla
-            // kaydeder (örn. 20260729\PRG-123.xlsx).
+            // Dosya diyaloğu sormadan, %AppData%\TurcaExce\Programlar altında
+            // bugünün tarihiyle bir klasör açar (örn. 20260729) ve içine Program
+            // No adıyla kaydeder (örn. Programlar\20260729\PRG-123.xlsx).
+            // Programın kurulu olduğu klasör kullanılmıyor: ClickOnce kurulum
+            // yolu her güncellemede değiştiğinden dosyalara ulaşılamıyordu
+            // (bkz. AppPaths.ProgramsDirectory).
             var now = DateTime.Now;
-            var dateFolder = Path.Combine(AppContext.BaseDirectory, now.ToString("yyyyMMdd"));
+            var dateFolder = Path.Combine(AppPaths.ProgramsDirectory, now.ToString("yyyyMMdd"));
             Directory.CreateDirectory(dateFolder);
 
             var safeProgramNo = string.Concat(orderDialog.ProgramNo
@@ -265,6 +281,10 @@ namespace TurcaExce
                 // Dönüşüm gerçekten üretildikten sonra işaretle; MaOrForm'da
                 // yalnızca kontrol edilir, kalıcı kayıt burada yapılır.
                 programNoRegistry.MarkUsed(orderDialog.ProgramNo);
+
+                // Çıktı kullanıcının seçmediği bir klasöre yazıldığı için
+                // klasör kendiliğinden açılır, dosya seçili gelir.
+                RevealInExplorer(targetPath);
             }
             catch (Exception ex)
             {
@@ -302,6 +322,28 @@ namespace TurcaExce
             {
                 MessageBox.Show(this, $"Yazdırma başlatılamadı: {ex.Message}", "Yazdırma hatası",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Dosyanın bulunduğu klasörü Windows Gezgini'nde açar ve dosyayı seçili
+        /// gösterir. Dosya bu noktada zaten oluşturulduğundan buradaki bir hata
+        /// dönüşümü başarısız saymaz; yalnızca durum satırında belirtilir.
+        /// </summary>
+        private void RevealInExplorer(string filePath)
+        {
+            try
+            {
+                // explorer.exe'nin /select sözdizimi tek argüman bekliyor
+                // ("/select,\"yol\""), bu yüzden ArgumentList değil Arguments.
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{filePath}\"")
+                {
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text += $" (klasör açılamadı: {ex.Message})";
             }
         }
 

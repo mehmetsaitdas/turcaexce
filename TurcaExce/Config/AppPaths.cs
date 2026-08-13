@@ -10,6 +10,16 @@
     {
         public static string DataDirectory { get; } = CreateDataDirectory();
 
+        /// <summary>
+        /// Elle üretim emri (btnManualOrder) çıktılarının klasörü:
+        /// %AppData%\TurcaExce\Programlar. Çıktılar programın kurulu olduğu
+        /// klasöre (AppContext.BaseDirectory) YAZILMAZ: uygulama ClickOnce ile
+        /// dağıtıldığı için kurulum yolu her güncellemede değişiyor ve
+        /// kullanıcı önceki günlerin dosyalarına ulaşamıyordu. Buradaki yol
+        /// ise sabittir.
+        /// </summary>
+        public static string ProgramsDirectory => Path.Combine(DataDirectory, "Programlar");
+
         private static string CreateDataDirectory()
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);

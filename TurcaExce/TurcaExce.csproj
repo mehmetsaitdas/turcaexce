@@ -17,7 +17,7 @@
 
   <PropertyGroup>
     <NeutralLanguage>tr</NeutralLanguage>
-    <AssemblyVersion>1.0.0.2</AssemblyVersion>
+    <AssemblyVersion>1.0.0.4</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
