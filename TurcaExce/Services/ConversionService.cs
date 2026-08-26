@@ -76,10 +76,18 @@ namespace TurcaExce.Services
                 var size = realSize.Replace("X", "x") + settings.SizeSuffix;
                 // UrunKodu tamamen buyuk harf/ASCII olmali (kalite/kaynak dosya adi/ayar
                 // tablolari kucuk harf ya da Turkce karakter icerebilir - bkz. ConvertManual).
-                // Kalite segmenti burada ham koddur (p.Prefix, örn. 72A) - çözümlenen
-                // Kalite Adı (quality) yalnızca Kalite kolonuna yazılır; ürün kodu
-                // müşteriye göre değişen adla değil, sabit kodla oluşur.
-                var productCode = TurkishText.ToAsciiUpper($"{p.Prefix}_{pattern}_{colorSegment}_{realSize}{edgeLetter}");
+                // Kalite segmenti Kalite Adı'dır (ham kod degil): TurcaDesk tarafinda
+                // SoFastEntryManager.GeStockProduct urunu yalnizca Code (UrunKodu) ile
+                // arayip buluyor, bulursa oldugu gibi geri donduruyor - ozellikleri
+                // (Kalite) guncellemiyor. Barkod da ClassesGeneEA13.GenerateEA13 ile
+                // dogrudan UrunKodu'nun ilk parcasindan (Kalite segmenti) uretiliyor.
+                // Kod (72A gibi) sabit kalirsa, ayni kalite kodunu farkli adla isteyen
+                // iki musterinin urunleri/barkodlari TurcaDesk'te CAKISIR (ikincinin adi
+                // hic kaydedilmez, ikisi de ilk musterinin barkodunu alir). Bu yuzden
+                // segment burada ham kod degil, cozumlenen Kalite Adı'dir - boylece
+                // farkli adlar TurcaDesk'te de farkli urun/barkod uretir.
+                var productCodeSuffix = TurkishText.ToAsciiUpper($"{pattern}_{colorSegment}_{realSize}{edgeLetter}");
+                var productCode = $"{TurkishText.ToAsciiUpper(quality)}_{productCodeSuffix}";
 
                 var ean = eanRegistry.GetOrCreate(p.FileName);
 
@@ -96,6 +104,7 @@ namespace TurcaExce.Services
                     {
                         ProductRoad = source.PathNo,
                         ProductCode = productCode,
+                        ProductCodeSuffix = productCodeSuffix,
                         Quality = quality,
                         QualityCode = p.Prefix,
                         Pattern = pattern,
@@ -297,7 +306,8 @@ namespace TurcaExce.Services
                 {
                     if (qty <= 0) continue;
 
-                    var productCode = $"{qualityCode}_{patternCode}_{colorCode}_{sizeKey}{edgeLetter}";
+                    var productCodeSuffix = $"{patternCode}_{colorCode}_{sizeKey}{edgeLetter}";
+                    var productCode = $"{qualityCode}_{productCodeSuffix}";
                     var size = sizeKey.Replace("X", "x") + settings.SizeSuffix;
                     var ean = eanRegistry.GetOrCreate(productCode);
 
@@ -307,6 +317,7 @@ namespace TurcaExce.Services
                         {
                             ProductRoad = row.Road,
                             ProductCode = productCode,
+                            ProductCodeSuffix = productCodeSuffix,
                             Quality = quality,
                             QualityCode = quality,
                             Pattern = patternCode,

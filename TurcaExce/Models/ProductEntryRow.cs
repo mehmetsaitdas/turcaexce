@@ -25,5 +25,14 @@
         /// eşleşen 0-9 arası) kaymasın.
         /// </summary>
         public string QualityCode { get; set; } = "";
+
+        /// <summary>
+        /// ProductCode'un Kalite Adı segmentinden sonraki kısmı (Desen_Renk_
+        /// Ebat+Kenar, zaten ASCII/büyük harf). Kalite Revize bir kodu yeniden
+        /// adlandırınca ProductCode'u ("KaliteAdı_..." biçiminde) bu ekten
+        /// yeniden kurmak için kullanılır - bkz. MainForm.btnQualityRev_Click.
+        /// Çıktı Excel'ine yazılmaz, gridPreview'da gizli.
+        /// </summary>
+        public string ProductCodeSuffix { get; set; } = "";
     }
 }

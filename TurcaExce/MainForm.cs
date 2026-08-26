@@ -375,9 +375,9 @@ namespace TurcaExce
 
         /// <summary>
         /// gridPreview'u _currentRows'a bağlar, kolon başlıklarını çıktı
-        /// dosyasındakilerle eşitler ve yalnızca Kalite Revize'nin gruplama
-        /// için kullandığı QualityCode kolonunu gizler (çıktıya yazılmıyor,
-        /// kullanıcıya gösterilecek bir bilgi değil).
+        /// dosyasındakilerle eşitler ve yalnızca Kalite Revize'nin kullandığı
+        /// iç alanları (QualityCode, ProductCodeSuffix) gizler (çıktıya
+        /// yazılmıyor, kullanıcıya gösterilecek bir bilgi değil).
         /// </summary>
         private void BindPreviewGrid()
         {
@@ -389,6 +389,8 @@ namespace TurcaExce
 
             if (gridPreview.Columns["QualityCode"] is { } qualityCodeColumn)
                 qualityCodeColumn.Visible = false;
+            if (gridPreview.Columns["ProductCodeSuffix"] is { } productCodeSuffixColumn)
+                productCodeSuffixColumn.Visible = false;
         }
 
         /// <summary>
@@ -396,9 +398,15 @@ namespace TurcaExce
         /// Bu buton son dönüşümdeki her farklı kalite kodunu tek tek gezip
         /// (Kalite Kodu / mevcut Kalite Adı, Geç | Tamam) adı değiştirme
         /// imkanı verir; Tamam denen her kod için o koda ait tüm satırların
-        /// Kalite kolonu güncellenir. Sonunda güncel liste txtTargetPath'e
-        /// yeniden yazılır. Genel eşleşme tablosuna (Kalite Listesi) dokunmaz
-        /// - burada girilen ad yalnızca bu çıktıya özeldir.
+        /// Kalite kolonu VE UrunKodu'ndaki Kalite Adı segmenti güncellenir.
+        /// UrunKodu'nun da güncellenmesi zorunlu: TurcaDesk tarafında ürün
+        /// UrunKodu'na göre bulunuyor/oluşturuluyor ve barkod (EAN-13)
+        /// doğrudan UrunKodu'ndan üretiliyor (bkz. SoFastEntryManager.
+        /// GeStockProduct, ClassesGeneEA13.GenerateEA13) - segment aynı
+        /// kalırsa farklı adlı iki müşterinin ürünü/barkodu çakışır. Sonunda
+        /// güncel liste txtTargetPath'e yeniden yazılır. Genel eşleşme
+        /// tablosuna (Kalite Listesi) dokunmaz - burada girilen ad yalnızca
+        /// bu çıktıya özeldir.
         /// </summary>
         private void btnQualityRev_Click(object? sender, EventArgs e)
         {
@@ -433,7 +441,10 @@ namespace TurcaExce
 
                 foreach (var row in _currentRows)
                     if (string.Equals(row.QualityCode, code, StringComparison.OrdinalIgnoreCase))
+                    {
                         row.Quality = newName;
+                        row.ProductCode = $"{TurkishText.ToAsciiUpper(newName)}_{row.ProductCodeSuffix}";
+                    }
 
                 updated++;
             }
