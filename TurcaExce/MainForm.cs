@@ -8,6 +8,11 @@ namespace TurcaExce
 {
     public partial class MainForm : Form
     {
+        // Son dönüşümün satırları/özeti: hem gridPreview'un veri kaynağı hem de
+        // Kalite Revize'nin üzerinde çalışıp txtTargetPath'e yeniden yazdığı liste.
+        private List<ProductEntryRow>? _currentRows;
+        private ManualOrderSummary? _currentSummary;
+
         public MainForm()
         {
             InitializeComponent();
@@ -210,7 +215,7 @@ namespace TurcaExce
                 var serialRegistry = SerialRegistry.Load();
                 var sourceLines = ProductionOrderReader.Read(txtSourcePath.Text);
                 var result = new ConversionService(settings, eanRegistry, colorRegistry, sizeRegistry, serialRegistry,
-                        PromptColorName, PromptSizeName)
+                        PromptColorName, PromptSizeName, PromptQualityName)
                     .Convert(sourceLines);
 
                 ApplyConversionResult(result, eanRegistry, txtTargetPath.Text,
@@ -359,14 +364,168 @@ namespace TurcaExce
             eanRegistry.Save();
 
             txtTargetPath.Text = targetPath;
-            gridPreview.DataSource = new List<ProductEntryRow>(result.Rows);
-            // Önizleme kolon başlıklarını çıktı dosyasındakilerle eşitle.
-            for (int c = 0; c < ExcelWriter.Headers.Length && c < gridPreview.Columns.Count; c++)
-                gridPreview.Columns[c].HeaderText = ExcelWriter.Headers[c];
+            _currentRows = new List<ProductEntryRow>(result.Rows);
+            _currentSummary = summary;
+            BindPreviewGrid();
 
             txtWarnings.Lines = [.. result.Warnings];
             lblStatus.Text = statusPrefix +
                 (result.Warnings.Count > 0 ? $", {result.Warnings.Count} uyarı var." : ".");
+        }
+
+        /// <summary>
+        /// gridPreview'u _currentRows'a bağlar, kolon başlıklarını çıktı
+        /// dosyasındakilerle eşitler ve yalnızca Kalite Revize'nin gruplama
+        /// için kullandığı QualityCode kolonunu gizler (çıktıya yazılmıyor,
+        /// kullanıcıya gösterilecek bir bilgi değil).
+        /// </summary>
+        private void BindPreviewGrid()
+        {
+            gridPreview.DataSource = null;
+            gridPreview.DataSource = _currentRows;
+
+            for (int c = 0; c < ExcelWriter.Headers.Length && c < gridPreview.Columns.Count; c++)
+                gridPreview.Columns[c].HeaderText = ExcelWriter.Headers[c];
+
+            if (gridPreview.Columns["QualityCode"] is { } qualityCodeColumn)
+                qualityCodeColumn.Visible = false;
+        }
+
+        /// <summary>
+        /// Aynı kalite kodunu farklı müşteriler farklı adla isteyebiliyor.
+        /// Bu buton son dönüşümdeki her farklı kalite kodunu tek tek gezip
+        /// (Kalite Kodu / mevcut Kalite Adı, Geç | Tamam) adı değiştirme
+        /// imkanı verir; Tamam denen her kod için o koda ait tüm satırların
+        /// Kalite kolonu güncellenir. Sonunda güncel liste txtTargetPath'e
+        /// yeniden yazılır. Genel eşleşme tablosuna (Kalite Listesi) dokunmaz
+        /// - burada girilen ad yalnızca bu çıktıya özeldir.
+        /// </summary>
+        private void btnQualityRev_Click(object? sender, EventArgs e)
+        {
+            if (_currentRows == null || _currentRows.Count == 0)
+            {
+                MessageBox.Show(this, "Önce dönüşüm yapın; revize edilecek bir liste bulunamadı.",
+                    "Eksik bilgi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(txtTargetPath.Text))
+            {
+                MessageBox.Show(this, "Çıktı dosyası yolu boş.", "Eksik bilgi",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var codes = _currentRows
+                .Select(r => r.QualityCode)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(c => c, StringComparer.Ordinal)
+                .ToList();
+
+            int updated = 0;
+            foreach (var code in codes)
+            {
+                var currentName = _currentRows
+                    .First(r => string.Equals(r.QualityCode, code, StringComparison.OrdinalIgnoreCase))
+                    .Quality;
+
+                var newName = PromptQualityRevision(code, currentName);
+                if (newName == null) continue; // Geç
+
+                foreach (var row in _currentRows)
+                    if (string.Equals(row.QualityCode, code, StringComparison.OrdinalIgnoreCase))
+                        row.Quality = newName;
+
+                updated++;
+            }
+
+            if (updated == 0)
+            {
+                lblStatus.Text = "Kalite revizesi yapılmadı.";
+                return;
+            }
+
+            BindPreviewGrid();
+
+            try
+            {
+                ExcelWriter.Write(txtTargetPath.Text, _currentRows, _currentSummary);
+                lblStatus.Text = $"{updated} kalite güncellendi, {txtTargetPath.Text} güncellendi.";
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = "Kalite Revize kaydedilemedi.";
+                MessageBox.Show(this, ex.Message, "Kaydetme hatası",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Kalite Listesi'ni (Kod -> Ad, conversion_settings.json'daki
+        /// QualityMap) görüntüleyip düzenlemek için QuaMaForm'u açar.
+        /// "Kaydet" ile kapanırsa değişiklik zaten dosyaya yazılmış olur.
+        /// </summary>
+        private void btnQualityList_Click(object sender, EventArgs e)
+        {
+            var settings = ConversionSettings.Load();
+            using var dialog = new QuaMaForm(settings);
+            dialog.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// Kalite Revize'de tek bir kod için sorulan ekran: Kalite Kodu
+        /// (salt okunur) ve düzenlenebilir Kalite Adı (mevcut adla dolu
+        /// gelir). Tamam'da yazılan ad (değişmemiş olsa da) döner; Geç'te
+        /// (veya pencere kapatılırsa) null döner ve o kod hiç dokunulmaz.
+        /// </summary>
+        private string? PromptQualityRevision(string qualityCode, string currentName)
+        {
+            using var dialog = new Form
+            {
+                Text = "Kalite Revize",
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                ClientSize = new Size(380, 150),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowInTaskbar = false,
+            };
+
+            var lblCode = new Label
+            {
+                Text = $"Kalite Kodu : {qualityCode}",
+                Location = new Point(12, 14),
+                Size = new Size(356, 20),
+            };
+            var lblName = new Label
+            {
+                Text = "Kalite Adı :",
+                Location = new Point(12, 48),
+                Size = new Size(78, 23),
+                TextAlign = ContentAlignment.MiddleLeft,
+            };
+            var txt = new TextBox { Location = new Point(96, 48), Size = new Size(272, 23), Text = currentName };
+            var btnOk = new Button
+            {
+                Text = "Tamam",
+                DialogResult = DialogResult.OK,
+                Location = new Point(212, 104),
+                Size = new Size(75, 28),
+            };
+            var btnSkip = new Button
+            {
+                Text = "Geç",
+                DialogResult = DialogResult.Cancel,
+                Location = new Point(293, 104),
+                Size = new Size(75, 28),
+            };
+
+            dialog.Controls.AddRange([lblCode, lblName, txt, btnOk, btnSkip]);
+            dialog.AcceptButton = btnOk;
+            dialog.CancelButton = btnSkip;
+
+            return dialog.ShowDialog(this) == DialogResult.OK && txt.Text.Trim().Length > 0
+                ? txt.Text.Trim()
+                : null;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -461,6 +620,56 @@ namespace TurcaExce
                 Text = "Atla",
                 DialogResult = DialogResult.Cancel,
                 Location = new Point(293, 90),
+                Size = new Size(75, 28),
+            };
+
+            dialog.Controls.AddRange([lbl, txt, btnOk, btnSkip]);
+            dialog.AcceptButton = btnOk;
+            dialog.CancelButton = btnSkip;
+
+            return dialog.ShowDialog(this) == DialogResult.OK && txt.Text.Trim().Length > 0
+                ? txt.Text.Trim()
+                : null;
+        }
+
+        /// <summary>
+        /// Dönüşüm sırasında tanınmayan kalite kodu (desen dosya adının
+        /// prefix'i, örn. 72A) çıkınca adını sorar. Verilen ad Kalite
+        /// Listesi'ne (ConversionSettings.QualityMap) kaydedilir; "Atla"
+        /// denirse null döner ve kod aynen kullanılır.
+        /// </summary>
+        private string? PromptQualityName(string qualityCode)
+        {
+            using var dialog = new Form
+            {
+                Text = "Bilinmeyen kalite kodu",
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                ClientSize = new Size(380, 130),
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ShowInTaskbar = false,
+            };
+
+            var lbl = new Label
+            {
+                Text = $"Kalite kodu bulunamadı.\nKalite Kodu: {qualityCode}\nAltına Kalite Adı girin (Kalite Listesi'ne kaydedilecek):",
+                Location = new Point(12, 12),
+                Size = new Size(356, 48),
+            };
+            var txt = new TextBox { Location = new Point(12, 64), Size = new Size(356, 23) };
+            var btnOk = new Button
+            {
+                Text = "Kaydet",
+                DialogResult = DialogResult.OK,
+                Location = new Point(212, 96),
+                Size = new Size(75, 28),
+            };
+            var btnSkip = new Button
+            {
+                Text = "Atla",
+                DialogResult = DialogResult.Cancel,
+                Location = new Point(293, 96),
                 Size = new Size(75, 28),
             };
 

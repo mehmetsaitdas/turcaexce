@@ -25,12 +25,14 @@ namespace TurcaExce.Services
         SizeRegistry sizeRegistry,
         SerialRegistry serialRegistry,
         Func<string, string?>? askUnknownColor = null,
-        Func<string, string?>? askUnknownSize = null)
+        Func<string, string?>? askUnknownSize = null,
+        Func<string, string?>? askUnknownQuality = null)
     {
         // Aynı bilinmeyen kod bir çalıştırmada yalnızca bir kez sorulur;
         // kullanıcı boş geçtiyse tekrar sorulmaz.
         private readonly HashSet<string> _declinedCodes = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _declinedSizes = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _declinedQualities = new(StringComparer.OrdinalIgnoreCase);
 
         public ConversionResult Convert(IEnumerable<ProductionOrderLine> sourceLines)
         {
@@ -51,7 +53,10 @@ namespace TurcaExce.Services
                 }
 
                 // Kalite = prefix'in kendisi; tabloda özel bir karşılığı varsa o kullanılır.
-                var quality = settings.QualityMap.GetValueOrDefault(p.Prefix, p.Prefix);
+                var quality = ResolveQuality(p.Prefix, out var qualityResolved);
+                if (!qualityResolved)
+                    result.Warnings.Add(
+                        $"Yol {source.PathNo} / No {source.ItemNo}: \"{p.Prefix}\" kalite kodu bulunamadı, kod aynen kullanıldı. Gerekirse Kalite Listesi'ne ekleyin.");
 
                 var color = ResolveColor(p.ColorCode, out var colorResolved);
                 if (!colorResolved)
@@ -71,7 +76,10 @@ namespace TurcaExce.Services
                 var size = realSize.Replace("X", "x") + settings.SizeSuffix;
                 // UrunKodu tamamen buyuk harf/ASCII olmali (kalite/kaynak dosya adi/ayar
                 // tablolari kucuk harf ya da Turkce karakter icerebilir - bkz. ConvertManual).
-                var productCode = TurkishText.ToAsciiUpper($"{quality}_{pattern}_{colorSegment}_{realSize}{edgeLetter}");
+                // Kalite segmenti burada ham koddur (p.Prefix, örn. 72A) - çözümlenen
+                // Kalite Adı (quality) yalnızca Kalite kolonuna yazılır; ürün kodu
+                // müşteriye göre değişen adla değil, sabit kodla oluşur.
+                var productCode = TurkishText.ToAsciiUpper($"{p.Prefix}_{pattern}_{colorSegment}_{realSize}{edgeLetter}");
 
                 var ean = eanRegistry.GetOrCreate(p.FileName);
 
@@ -89,6 +97,7 @@ namespace TurcaExce.Services
                         ProductRoad = source.PathNo,
                         ProductCode = productCode,
                         Quality = quality,
+                        QualityCode = p.Prefix,
                         Pattern = pattern,
                         Color = color,
                         Size = size,
@@ -106,6 +115,36 @@ namespace TurcaExce.Services
             serialRegistry.Save();
 
             return result;
+        }
+
+        /// <summary>
+        /// Kalite kodunu (desen dosya adındaki prefix, örn. 72A) ada çevirir.
+        /// Önce settings.QualityMap'e bakılır; yoksa (varsa) askUnknownQuality
+        /// ile kullanıcıya sorulur, verilen ad QualityMap'e eklenip
+        /// conversion_settings.json'a kaydedilir ve kullanılır. Kullanıcı boş
+        /// geçerse kod aynen döner ve resolved false olur.
+        /// </summary>
+        private string ResolveQuality(string qualityCode, out bool resolved)
+        {
+            resolved = true;
+
+            if (settings.QualityMap.TryGetValue(qualityCode, out var known))
+                return known;
+
+            if (askUnknownQuality != null && !_declinedQualities.Contains(qualityCode))
+            {
+                var answer = askUnknownQuality(qualityCode);
+                if (!string.IsNullOrWhiteSpace(answer))
+                {
+                    settings.QualityMap[qualityCode] = answer.Trim();
+                    settings.Save();
+                    return answer.Trim();
+                }
+                _declinedQualities.Add(qualityCode);
+            }
+
+            resolved = false;
+            return qualityCode;
         }
 
         /// <summary>
@@ -269,6 +308,7 @@ namespace TurcaExce.Services
                             ProductRoad = row.Road,
                             ProductCode = productCode,
                             Quality = quality,
+                            QualityCode = quality,
                             Pattern = patternCode,
                             Color = colorDisplay,
                             Size = size,

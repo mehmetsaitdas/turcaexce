@@ -50,6 +50,8 @@
             txtWarnings = new TextBox();
             lblSettingsFile = new Label();
             btnEmaHistory = new Button();
+            btnQualityRev = new Button();
+            btnQualityList = new Button();
             ((System.ComponentModel.ISupportInitialize)gridPreview).BeginInit();
             SuspendLayout();
             // 
@@ -77,9 +79,9 @@
             // 
             // btnManualOrder
             // 
-            btnManualOrder.Location = new Point(320, 114);
+            btnManualOrder.Location = new Point(562, 114);
             btnManualOrder.Name = "btnManualOrder";
-            btnManualOrder.Size = new Size(205, 32);
+            btnManualOrder.Size = new Size(150, 32);
             btnManualOrder.TabIndex = 19;
             btnManualOrder.Text = "Elle Üretim Emri Gir";
             btnManualOrder.UseVisualStyleBackColor = true;
@@ -87,9 +89,9 @@
             // 
             // btnPrint
             // 
-            btnPrint.Location = new Point(535, 114);
+            btnPrint.Location = new Point(718, 114);
             btnPrint.Name = "btnPrint";
-            btnPrint.Size = new Size(134, 32);
+            btnPrint.Size = new Size(107, 32);
             btnPrint.TabIndex = 20;
             btnPrint.Text = "Yazdır";
             btnPrint.UseVisualStyleBackColor = true;
@@ -155,7 +157,7 @@
             // 
             btnConvert.Location = new Point(130, 114);
             btnConvert.Name = "btnConvert";
-            btnConvert.Size = new Size(180, 32);
+            btnConvert.Size = new Size(126, 32);
             btnConvert.TabIndex = 6;
             btnConvert.Text = "Dönüştür";
             btnConvert.UseVisualStyleBackColor = true;
@@ -164,16 +166,16 @@
             // lblStatus
             // 
             lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            lblStatus.Location = new Point(645, 114);
+            lblStatus.Location = new Point(12, 150);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(327, 32);
+            lblStatus.Size = new Size(960, 22);
             lblStatus.TabIndex = 7;
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // lblEmail
             // 
             lblEmail.AutoSize = true;
-            lblEmail.Location = new Point(12, 158);
+            lblEmail.Location = new Point(12, 188);
             lblEmail.Name = "lblEmail";
             lblEmail.Size = new Size(50, 15);
             lblEmail.TabIndex = 12;
@@ -181,7 +183,7 @@
             // 
             // txtEmail
             // 
-            txtEmail.Location = new Point(130, 154);
+            txtEmail.Location = new Point(130, 184);
             txtEmail.Name = "txtEmail";
             txtEmail.PlaceholderText = "alici@ornek.com";
             txtEmail.Size = new Size(241, 23);
@@ -189,7 +191,7 @@
             // 
             // btnSendEmail
             // 
-            btnSendEmail.Location = new Point(391, 153);
+            btnSendEmail.Location = new Point(391, 183);
             btnSendEmail.Name = "btnSendEmail";
             btnSendEmail.Size = new Size(134, 25);
             btnSendEmail.TabIndex = 14;
@@ -199,7 +201,7 @@
             // 
             // btnOutlookLogin
             // 
-            btnOutlookLogin.Location = new Point(685, 153);
+            btnOutlookLogin.Location = new Point(685, 183);
             btnOutlookLogin.Name = "btnOutlookLogin";
             btnOutlookLogin.Size = new Size(140, 25);
             btnOutlookLogin.TabIndex = 15;
@@ -211,7 +213,7 @@
             // 
             lblMailStatus.AutoSize = true;
             lblMailStatus.ForeColor = SystemColors.GrayText;
-            lblMailStatus.Location = new Point(831, 157);
+            lblMailStatus.Location = new Point(831, 187);
             lblMailStatus.Name = "lblMailStatus";
             lblMailStatus.Size = new Size(141, 15);
             lblMailStatus.TabIndex = 16;
@@ -224,11 +226,11 @@
             gridPreview.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             gridPreview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
             gridPreview.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            gridPreview.Location = new Point(12, 188);
+            gridPreview.Location = new Point(12, 218);
             gridPreview.Name = "gridPreview";
             gridPreview.ReadOnly = true;
             gridPreview.RowHeadersVisible = false;
-            gridPreview.Size = new Size(960, 330);
+            gridPreview.Size = new Size(960, 300);
             gridPreview.TabIndex = 8;
             // 
             // lblWarnings
@@ -264,7 +266,7 @@
             // 
             // btnEmaHistory
             // 
-            btnEmaHistory.Location = new Point(535, 153);
+            btnEmaHistory.Location = new Point(535, 183);
             btnEmaHistory.Name = "btnEmaHistory";
             btnEmaHistory.Size = new Size(134, 25);
             btnEmaHistory.TabIndex = 21;
@@ -272,11 +274,34 @@
             btnEmaHistory.UseVisualStyleBackColor = true;
             btnEmaHistory.Click += btnEmaHistory_Click;
             // 
+            // btnQualityRev
+            // 
+            btnQualityRev.Location = new Point(262, 114);
+            btnQualityRev.Name = "btnQualityRev";
+            btnQualityRev.Size = new Size(85, 32);
+            btnQualityRev.TabIndex = 22;
+            btnQualityRev.Text = "Kalite Revize";
+            btnQualityRev.UseVisualStyleBackColor = true;
+            btnQualityRev.Click += btnQualityRev_Click;
+            // 
+            // btnQualityList
+            // 
+            btnQualityList.Location = new Point(353, 114);
+            btnQualityList.Name = "btnQualityList";
+            btnQualityList.Size = new Size(85, 32);
+            btnQualityList.TabIndex = 23;
+            btnQualityList.Text = "Kalite Listesi";
+            btnQualityList.UseVisualStyleBackColor = true;
+            btnQualityList.Click += btnQualityList_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(984, 667);
+            Controls.Add(btnQualityList);
+            Controls.Add(btnQualityRev);
+            Controls.Add(btnPrint);
             Controls.Add(btnEmaHistory);
             Controls.Add(btnCompany);
             Controls.Add(btnSupport);
@@ -287,9 +312,8 @@
             Controls.Add(txtTargetPath);
             Controls.Add(btnBrowseTarget);
             Controls.Add(btnConvert);
-            Controls.Add(btnManualOrder);
-            Controls.Add(btnPrint);
             Controls.Add(lblStatus);
+            Controls.Add(btnManualOrder);
             Controls.Add(lblEmail);
             Controls.Add(txtEmail);
             Controls.Add(btnSendEmail);
@@ -334,5 +358,7 @@
         private TextBox txtWarnings;
         private Label lblSettingsFile;
         private Button btnEmaHistory;
+        private Button btnQualityRev;
+        private Button btnQualityList;
     }
 }

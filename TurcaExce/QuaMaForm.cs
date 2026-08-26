@@ -12,6 +12,7 @@ namespace TurcaExce
     {
         private readonly ConversionSettings _settings;
         private readonly DataGridView _grid;
+        private readonly TextBox _txtSearch;
 
         public QuaMaForm(ConversionSettings settings)
         {
@@ -23,20 +24,30 @@ namespace TurcaExce
             MinimizeBox = false;
             MaximizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(420, 420);
+            ClientSize = new Size(620, 560);
 
             var lblHint = new Label
             {
                 Text = "Kod = seride/desende kullanılan kısa kod, Ad = çıktıda görünecek kalite adı.",
                 Location = new Point(12, 10),
-                Size = new Size(396, 32),
+                Size = new Size(596, 32),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 ForeColor = SystemColors.GrayText,
             };
 
-            _grid = new DataGridView
+            _txtSearch = new TextBox
             {
                 Location = new Point(12, 46),
-                Size = new Size(396, 286),
+                Size = new Size(596, 23),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                PlaceholderText = "Ara (Kod veya Ad)...",
+            };
+            _txtSearch.TextChanged += (_, _) => ApplyFilter();
+
+            _grid = new DataGridView
+            {
+                Location = new Point(12, 75),
+                Size = new Size(596, 395),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 AllowUserToAddRows = false,
                 RowHeadersVisible = false,
@@ -52,14 +63,26 @@ namespace TurcaExce
 
             var btnAdd = new Button
             {
-                Text = "+ Ekle", Location = new Point(12, 340), Size = new Size(90, 25),
+                Text = "+ Ekle",
+                Location = new Point(12, 481),
+                Size = new Size(90, 25),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
             };
-            btnAdd.Click += (_, _) => _grid.Rows.Add();
+            btnAdd.Click += (_, _) =>
+            {
+                // Yeni satır her zaman görünsün diye filtre temizlenir; aksi
+                // halde arama terimine uymayan boş satır anında gizlenirdi.
+                _txtSearch.Text = "";
+                var row = _grid.Rows[_grid.Rows.Add()];
+                _grid.CurrentCell = row.Cells["Kod"];
+                _grid.BeginEdit(true);
+            };
 
             var btnRemove = new Button
             {
-                Text = "Sil", Location = new Point(108, 340), Size = new Size(90, 25),
+                Text = "Sil",
+                Location = new Point(108, 481),
+                Size = new Size(90, 25),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
             };
             btnRemove.Click += (_, _) =>
@@ -70,20 +93,51 @@ namespace TurcaExce
 
             var btnCancel = new Button
             {
-                Text = "İptal", Location = new Point(253, 378), Size = new Size(75, 28),
+                Text = "İptal",
+                Location = new Point(450, 518),
+                Size = new Size(75, 28),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             };
             btnCancel.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
 
             var btnSave = new Button
             {
-                Text = "Kaydet", Location = new Point(333, 378), Size = new Size(75, 28),
+                Text = "Kaydet",
+                Location = new Point(533, 518),
+                Size = new Size(75, 28),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
             };
             btnSave.Click += BtnSave_Click;
 
-            Controls.AddRange([lblHint, _grid, btnAdd, btnRemove, btnCancel, btnSave]);
+            Controls.AddRange([lblHint, _txtSearch, _grid, btnAdd, btnRemove, btnCancel, btnSave]);
             CancelButton = btnCancel;
+        }
+
+        /// <summary>
+        /// _txtSearch'teki terimi Kod veya Ad'da (büyük/küçük harf duyarsız)
+        /// içeren satırları gösterir, diğerlerini gizler. Sadece görünürlüğü
+        /// değiştirir; BtnSave_Click gizli satırları da okuduğundan filtre
+        /// kaydı etkilemez.
+        /// </summary>
+        private void ApplyFilter()
+        {
+            var term = _txtSearch.Text.Trim();
+
+            foreach (DataGridViewRow row in _grid.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                if (term.Length == 0)
+                {
+                    row.Visible = true;
+                    continue;
+                }
+
+                var kod = row.Cells["Kod"].Value?.ToString() ?? "";
+                var ad = row.Cells["Ad"].Value?.ToString() ?? "";
+                row.Visible = kod.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                              ad.Contains(term, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         private void BtnSave_Click(object? sender, EventArgs e)
@@ -114,6 +168,11 @@ namespace TurcaExce
 
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        private void InitializeComponent()
+        {
+
         }
     }
 }
